@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react'
 
 type Product = {
@@ -15,7 +14,18 @@ type CartItem = {
   quantity: number
 }
 
+type Sale = {
+  id: string
+  items: CartItem[]
+  total: number
+  paymentMethod: string
+  amountReceived: number
+  change: number
+  date: string
+}
+
 const STORAGE_KEY = 'bazuh-pdv-products'
+const SALES_STORAGE_KEY = 'bazuh-pdv-sales'
 
 function formatCurrency(value: number) {
   return value.toLocaleString('pt-BR', {
@@ -123,11 +133,94 @@ function Sales() {
   )
 
   const receivedValue = Number(amountReceived) || 0
-const change = receivedValue - totalPrice
-const canFinalize =
-  cart.length > 0 &&
-  paymentMethod !== '' &&
-  (paymentMethod !== 'Dinheiro' || receivedValue >= totalPrice)
+  const change = receivedValue - totalPrice
+
+  const canFinalize =
+    cart.length > 0 &&
+    paymentMethod !== '' &&
+    (paymentMethod !== 'Dinheiro' || receivedValue >= totalPrice)
+
+  function finalizeSale() {
+  if (!canFinalize) return
+
+  try {
+    const savedProducts = localStorage.getItem(STORAGE_KEY)
+    const currentProducts: Product[] = savedProducts
+      ? JSON.parse(savedProducts)
+      : []
+
+    // Confere se ainda existe estoque suficiente
+    for (const item of cart) {
+      const currentProduct = currentProducts.find(
+        (product) => product.id === item.product.id,
+      )
+
+      if (!currentProduct || currentProduct.stock < item.quantity) {
+        alert(`Estoque insuficiente para: ${item.product.name}`)
+        setProducts(currentProducts)
+        return
+      }
+    }
+
+    // Calcula o novo estoque
+    const updatedProducts = currentProducts.map((product) => {
+      const cartItem = cart.find(
+        (item) => item.product.id === product.id,
+      )
+
+      if (!cartItem) return product
+
+      return {
+        ...product,
+        stock: product.stock - cartItem.quantity,
+      }
+    })
+
+    const savedSales = localStorage.getItem(SALES_STORAGE_KEY)
+    const sales: Sale[] = savedSales
+      ? JSON.parse(savedSales)
+      : []
+
+    const sale: Sale = {
+      id: crypto.randomUUID(),
+      items: cart.map((item) => ({
+        product: { ...item.product },
+        quantity: item.quantity,
+      })),
+      total: totalPrice,
+      paymentMethod,
+      amountReceived:
+        paymentMethod === 'Dinheiro' ? receivedValue : totalPrice,
+      change: paymentMethod === 'Dinheiro' ? change : 0,
+      date: new Date().toISOString(),
+    }
+
+    sales.push(sale)
+
+    // Salva a venda e o estoque atualizado
+    localStorage.setItem(
+      SALES_STORAGE_KEY,
+      JSON.stringify(sales),
+    )
+
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(updatedProducts),
+    )
+
+    // Atualiza os produtos na tela imediatamente
+    setProducts(updatedProducts)
+
+    alert('Venda registrada com sucesso!')
+
+    setCart([])
+    setPaymentMethod('')
+    setAmountReceived('')
+  } catch (error) {
+    console.error('Erro ao registrar venda:', error)
+    alert('Não foi possível registrar a venda.')
+  }
+}
 
   return (
     <div className="page">
@@ -139,58 +232,63 @@ const canFinalize =
       </div>
 
       <div className="panel" style={{ marginBottom: '24px' }}>
-  <div className="panel-heading">
-    <div>
-      <h3>Pagamento</h3>
-      <p>Selecione como o cliente vai pagar.</p>
-    </div>
-  </div>
+        <div className="panel-heading">
+          <div>
+            <h3>Pagamento</h3>
+            <p>Selecione como o cliente vai pagar.</p>
+          </div>
+        </div>
 
-  <div className="products-toolbar">
-    <select
-      value={paymentMethod}
-      onChange={(event) => {
-        setPaymentMethod(event.target.value)
-        setAmountReceived('')
-      }}
-    >
-      <option value="">Selecione a forma de pagamento</option>
-      <option value="Pix">Pix</option>
-      <option value="Dinheiro">Dinheiro</option>
-      <option value="Débito">Cartão de débito</option>
-      <option value="Crédito">Cartão de crédito</option>
-    </select>
-  </div>
+        <div className="products-toolbar">
+          <select
+            value={paymentMethod}
+            onChange={(event) => {
+              setPaymentMethod(event.target.value)
+              setAmountReceived('')
+            }}
+          >
+            <option value="">Selecione a forma de pagamento</option>
+            <option value="Pix">Pix</option>
+            <option value="Dinheiro">Dinheiro</option>
+            <option value="Débito">Cartão de débito</option>
+            <option value="Crédito">Cartão de crédito</option>
+          </select>
+        </div>
 
-  {paymentMethod === 'Dinheiro' && (
-    <div style={{ marginTop: '16px' }}>
-      <label htmlFor="amountReceived">Valor recebido (R$)</label>
+        {paymentMethod === 'Dinheiro' && (
+          <div style={{ marginTop: '16px' }}>
+            <label htmlFor="amountReceived">
+              Valor recebido (R$)
+            </label>
 
-      <input
-        id="amountReceived"
-        type="number"
-        min="0"
-        step="0.01"
-        placeholder="Ex.: 50,00"
-        value={amountReceived}
-        onChange={(event) => setAmountReceived(event.target.value)}
-      />
+            <input
+              id="amountReceived"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="Ex.: 50,00"
+              value={amountReceived}
+              onChange={(event) =>
+                setAmountReceived(event.target.value)
+              }
+            />
 
-      <p>
-        Troco:{' '}
-        <strong>
-          {formatCurrency(Math.max(0, change))}
-        </strong>
-      </p>
+            <p>
+              Troco:{' '}
+              <strong>
+                {formatCurrency(Math.max(0, change))}
+              </strong>
+            </p>
 
-      {receivedValue < totalPrice && amountReceived !== '' && (
-        <p style={{ color: '#dc2626' }}>
-          O valor recebido é menor que o total da venda.
-        </p>
-      )}
-    </div>
-  )}
-    </div>
+            {receivedValue < totalPrice &&
+              amountReceived !== '' && (
+                <p style={{ color: '#dc2626' }}>
+                  O valor recebido é menor que o total da venda.
+                </p>
+              )}
+          </div>
+        )}
+      </div>
 
       <div className="products-toolbar">
         <input
@@ -227,7 +325,10 @@ const canFinalize =
         )}
       </div>
 
-      <section className="panel" style={{ marginTop: '24px' }}>
+      <section
+        className="panel"
+        style={{ marginTop: '24px' }}
+      >
         <div className="panel-heading">
           <div>
             <h3>Carrinho da venda</h3>
@@ -257,7 +358,10 @@ const canFinalize =
               >
                 <div>
                   <strong>{item.product.name}</strong>
-                  <p>{formatCurrency(item.product.salePrice)} por unidade</p>
+                  <p>
+                    {formatCurrency(item.product.salePrice)} por
+                    unidade
+                  </p>
                 </div>
 
                 <div
@@ -337,20 +441,18 @@ const canFinalize =
               style={{ marginTop: '16px' }}
               onClick={() => setCart([])}
             >
-            Limpar carrinho
-            </button>
-            <button
-            type="button"
-            className="primary-button"
-            style={{ marginTop: '16px', marginLeft: '12px' }}
-            disabled={!canFinalize}
-            onClick={() => {
-            alert('Próxima etapa: registrar a venda e atualizar o estoque.')
-            }}
-            >
-            Finalizar venda
+              Limpar carrinho
             </button>
 
+            <button
+              type="button"
+              className="primary-button"
+              style={{ marginTop: '16px', marginLeft: '12px' }}
+              disabled={!canFinalize}
+              onClick={finalizeSale}
+            >
+              Finalizar venda
+            </button>
           </div>
         )}
       </section>

@@ -536,3 +536,87 @@
     flex-direction: column;
   }
 }
+
+
+/* COMPROVANTE BAZUH */
+.receipt {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: 58mm auto;
+    margin: 0;
+  }
+
+  html,
+  body {
+    width: 58mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  .print-container,
+  .print-container * {
+    visibility: visible !important;
+  }
+
+  .print-container {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 54mm !important;
+    margin: 0 !important;
+    padding: 2mm !important;
+    background: white !important;
+    color: black !important;
+  }
+
+  .receipt {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: black !important;
+    font-family: Arial, sans-serif;
+    font-size: 10px;
+    line-height: 1.4;
+  }
+
+  .receipt-header,
+  .receipt-footer {
+    text-align: center;
+  }
+
+  .receipt-header h2 {
+    font-size: 20px;
+    margin: 0;
+  }
+
+  .receipt hr {
+    border: none;
+    border-top: 1px dashed black;
+    margin: 8px 0;
+  }
+
+  .receipt-item {
+    margin: 8px 0;
+  }
+
+  .receipt-item p {
+    margin: 2px 0;
+  }
+
+  .receipt h2 {
+    font-size: 16px;
+  }
+
+  .receipt-footer {
+    margin-top: 12px;
+  }
+}
