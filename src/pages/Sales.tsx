@@ -235,7 +235,9 @@ function Sales() {
         <div className="panel-heading">
           <div>
             <h3>Pagamento</h3>
+            <br />
             <p>Selecione como o cliente vai pagar.</p>
+            <br />
           </div>
         </div>
 
@@ -258,7 +260,9 @@ function Sales() {
         {paymentMethod === 'Dinheiro' && (
           <div style={{ marginTop: '16px' }}>
             <label htmlFor="amountReceived">
-              Valor recebido (R$)
+              Valor recebido
+              <br />
+              <br />
             </label>
 
             <input
@@ -266,7 +270,7 @@ function Sales() {
               type="number"
               min="0"
               step="0.01"
-              placeholder="Ex.: 50,00"
+              placeholder="0,00"
               value={amountReceived}
               onChange={(event) =>
                 setAmountReceived(event.target.value)

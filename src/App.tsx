@@ -1,15 +1,15 @@
-
 import History from './pages/History'
 import { useEffect, useState } from 'react'
 import Sales from './pages/Sales'
+import Products from './pages/Products'
 import './App.css'
 
 const menuItems = [
   { id: 'dashboard', label: 'Dashboard', icon: '▦' },
   { id: 'products', label: 'Produtos', icon: '□' },
-  { id: 'sales', label: 'PDV', icon: '＋' },
-  { id: 'history', label: 'Histórico de vendas', icon: '◷' },
+  { id: 'sales', label: 'PDV', icon: '🛍' },
   { id: 'payments', label: 'Pagamentos', icon: '▤' },
+  { id: 'history', label: 'Histórico de vendas', icon: '◷' },
   { id: 'settings', label: 'Configurações', icon: '⚙' },
 ]
 
@@ -95,10 +95,11 @@ function App() {
     <div className="app-layout">
       <aside className="sidebar">
         <div className="brand">
-          <div className="brand-icon">B</div>
+          <div className="brand-icon"></div>
           <div>
-            <h1>BAZUH</h1>
-            <span>PDV COMERCIAL</span>
+            <h1>Sistema Teste</h1>
+            <br />
+            <span>ERP COMERCIAL</span>
           </div>
         </div>
 
@@ -138,7 +139,7 @@ function App() {
           </div>
 
           <div className="user-profile">
-            <div className="user-avatar">B</div>
+            <div className="user-avatar">V</div>
             <div className="user-info">
               <strong>Administrador</strong>
               <span>Gestão da loja</span>
@@ -265,12 +266,12 @@ function App() {
               {sale.total.toLocaleString('pt-BR', {
                style: 'currency',
                currency: 'BRL',
-               })}
-        </strong>
-      </div>
-    ))}
-  </div>
-)}
+              })}
+              </strong>
+              </div>
+              ))  }
+              </div>
+              )}
                 </section>
 
                 <section className="panel quick-panel">
@@ -319,11 +320,14 @@ function App() {
                 </section>
               </div>
             </>
+          ) : activePage === 'products' ? (
+              <Products />
           ) : activePage === 'sales' ? (
              <Sales />
           ) : activePage === 'history' ? (
              <History />
           ) : (
+            
             <section className="panel placeholder-panel">
               <div className="empty-icon">⚙</div>
               <h3>{currentPage?.label}</h3>

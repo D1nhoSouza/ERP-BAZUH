@@ -101,7 +101,6 @@ function Products() {
     (product) => product.stock <= product.minStock,
   ).length
 
-
   function updateField<K extends keyof ProductFormData>(
     field: K,
     value: ProductFormData[K],

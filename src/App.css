@@ -24,7 +24,7 @@
   gap: 12px;
   padding: 0 10px 34px;
 }
-
+ /*  
 .brand-icon {
   width: 43px;
   height: 43px;
@@ -36,6 +36,7 @@
   font-size: 25px;
   font-weight: 800;
 }
+*/
 
 .brand h1 {
   font-size: 19px;
@@ -89,8 +90,8 @@
 
 .nav-item.active {
   color: white;
-  background: #7255e8;
-  box-shadow: 0 5px 14px #7255e833;
+  background: #1d59e0;
+  box-shadow: 0 5px 14px #1d59e0;
 }
 
 .nav-icon {
@@ -162,7 +163,7 @@
   height: 40px;
   border-radius: 12px;
   background: #eee9ff;
-  color: #7255e8;
+  color: #1d59e0;
   font-weight: 800;
 }
 
@@ -258,7 +259,7 @@
 }
 
 .purple {
-  color: #7255e8;
+  color: #1d59e0;
   background: #f0ecff;
 }
 
@@ -311,7 +312,7 @@
 .text-button {
   border: 0;
   background: transparent;
-  color: #7255e8;
+  color: #1d59e0;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -334,7 +335,7 @@
   height: 54px;
   border-radius: 15px;
   background: #f0ecff;
-  color: #7255e8;
+  color: #1d59e0;
   font-size: 24px;
   margin-bottom: 15px;
 }
@@ -356,7 +357,7 @@
   border: 0;
   border-radius: 8px;
   padding: 11px 15px;
-  background: #7255e8;
+  background: #1d59e0;
   color: white;
   font-size: 12px;
   font-weight: 600;
@@ -365,7 +366,7 @@
 }
 
 .primary-button:hover {
-  background: #5e42d0;
+  background: #1d59e0;
 }
 
 .quick-panel {
@@ -422,7 +423,7 @@
 }
 
 .quick-action:hover strong {
-  color: #7255e8;
+  color: #1d59e0;
 }
 
 .placeholder-panel {
@@ -436,7 +437,7 @@
 
 .placeholder-panel h3 {
   margin: 0;
-  color: #25283a;
+  color: #1d59e0;
 }
 
 .app-footer {
