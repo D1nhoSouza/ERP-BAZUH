@@ -99,7 +99,7 @@ function App() {
         <div className="brand">
           <div className="brand-icon"></div>
           <div>
-            <h1>Sistema Teste</h1>
+            <h1>BAZUH</h1>
             <br />
             <span>ERP COMERCIAL</span>
           </div>
