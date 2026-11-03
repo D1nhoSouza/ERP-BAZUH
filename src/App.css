@@ -13,8 +13,8 @@
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  background: #171923;
-  color: #f8fafc;
+  background: #111827;
+  color: #fcf8f8;
   padding: 28px 16px 18px;
 }
 
@@ -125,7 +125,7 @@
   flex: 1;
   min-width: 0;
   flex-direction: column;
-  background: #f5f6fa;
+  background: #EBEBEB;
 }
 
 .topbar {
@@ -620,4 +620,36 @@
   .receipt-footer {
     margin-top: 12px;
   }
+}
+
+/* Indicadores de estoque */
+.stock-badge {
+  display: inline-block;
+  min-width: 35px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* Estoque disponível */
+.stock-badge.stock-ok {
+  background-color: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+/* Estoque baixo */
+.stock-badge.stock-low {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+}
+
+/* Produto esgotado */
+.stock-badge.stock-out {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
 }

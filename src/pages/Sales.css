@@ -1,0 +1,359 @@
+
+/* Layout principal do Ponto de Venda */
+
+.pdv-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(320px, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+/* Coluna dos produtos */
+.pdv-products {
+  min-width: 0;
+}
+
+/* Coluna do carrinho e pagamento */
+.pdv-checkout {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Adaptação para celulares e telas menores */
+@media (max-width: 900px) {
+  .pdv-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* Itens do carrinho */
+
+.pdv-cart-item {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.pdv-cart-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Total da venda */
+
+.pdv-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.pdv-total strong {
+  font-size: 1.5rem;
+}
+
+/* Pagamento */
+
+.pdv-cash-payment {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.pdv-cash-payment input {
+  width: 100%;
+}
+
+/* Botão de finalização */
+
+.pdv-finalize-button {
+  width: 100%;
+  margin-top: 20px;
+  padding: 14px;
+}
+
+/* Ajustes da lista de produtos */
+
+.pdv-products .products-grid {
+  margin-top: 20px;
+}
+
+.pdv-products .product-card {
+  min-width: 0;
+}
+
+
+/* Campos de pesquisa e pagamento */
+
+.pdv-products .products-toolbar,
+.pdv-checkout .products-toolbar {
+  width: 100%;
+}
+
+.pdv-products .products-toolbar input,
+.pdv-checkout .products-toolbar select {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  background-color: #ffffff;
+  color: #111827;
+}
+
+.pdv-products .products-toolbar input:focus,
+.pdv-checkout .products-toolbar select:focus {
+  outline: none;
+  border-color: #2563eb;
+}
+
+
+/* Destaque do total da venda */
+
+.pdv-checkout .pdv-total {
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 20px;
+  margin-top: 24px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.pdv-checkout .pdv-total span {
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.pdv-checkout .pdv-total strong {
+  font-size: 28px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+
+/* Carrinho de vendas */
+
+.pdv-cart-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.pdv-cart-item > div:first-child {
+  min-width: 0;
+}
+
+.pdv-cart-item > div:first-child strong {
+  font-size: 14px;
+  color: #1e293b;
+}
+
+.pdv-cart-item > div:first-child p {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+/* Botões de quantidade */
+
+.pdv-cart-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.pdv-cart-controls .text-button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.pdv-cart-controls .text-button:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+
+.pdv-cart-controls .text-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Preço total do item */
+
+.pdv-cart-item > strong {
+  font-size: 15px;
+  color: #0f172a;
+}
+
+/* Botão remover */
+
+.pdv-cart-item > .text-button {
+  justify-self: end;
+  color: #dc2626;
+  font-size: 12px;
+}
+
+
+/* Grade dos produtos */
+
+.pdv-products .products-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 20px;
+}
+
+/* Cartão individual */
+
+.pdv-products .product-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 20px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.pdv-products .product-card:hover {
+  border-color: #94a3b8;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.pdv-products .product-card h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #0f172a;
+  margin: 0;
+}
+
+.pdv-products .product-card p {
+  font-size: 13px;
+  color: #64748b;
+  margin: 0;
+}
+
+.pdv-products .product-card > strong {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-top: 12px;
+}
+
+/* Botão adicionar ao carrinho */
+
+.pdv-products .product-card .primary-button {
+  width: 100%;
+  margin-top: auto;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+/* Responsividade */
+
+@media (max-width: 1200px) {
+  .pdv-products .products-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* Área de pagamento */
+
+.pdv-checkout .products-toolbar select {
+  width: 100%;
+  min-height: 46px;
+  padding: 12px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: #0f172a;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.pdv-checkout .products-toolbar select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Valor recebido em dinheiro */
+
+.pdv-cash-payment label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+}
+
+.pdv-cash-payment input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 46px;
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+.pdv-cash-payment p {
+  font-size: 14px;
+}
+
+/* Botão finalizar venda */
+
+.pdv-finalize-button {
+  display: block;
+  width: 100%;
+  min-height: 50px;
+  margin-top: 24px;
+  padding: 14px 20px;
+  border: none;
+  border-radius: 10px;
+  background-color: #16a34a;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.pdv-finalize-button:hover:not(:disabled) {
+  background-color: #15803d;
+}
+
+.pdv-finalize-button:disabled {
+  background-color: #94a3b8;
+  cursor: not-allowed;
+  opacity: 0.65;
+}

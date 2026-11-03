@@ -3,8 +3,10 @@ import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import type { Product, ProductFormData } from '../types/product'
 import { formatCurrency } from '../utils/format'
+import './Products.css'
 
 const STORAGE_KEY = 'bazuh-pdv-products'
+const CODE_COUNTER_KEY = 'bazuh-pdv-next-product-code'
 
 const emptyForm: ProductFormData = {
   code: '',
@@ -35,26 +37,66 @@ const categories = [
 function loadProducts(): Product[] {
   try {
     const saved = localStorage.getItem(STORAGE_KEY)
+
     if (!saved) return []
 
     const parsed: unknown = JSON.parse(saved)
+
     return Array.isArray(parsed) ? parsed as Product[] : []
   } catch {
     return []
   }
 }
 
-function createProductCode(products: Product[]): string {
-  let highest = 0
 
-  for (const product of products) {
+function getNextProductNumber(products: Product[]): number {
+  const highestExisting = products.reduce((highest, product) => {
     const match = product.code.match(/^BAZ(\d+)$/i)
-    if (match) {
-      highest = Math.max(highest, Number(match[1]))
-    }
-  }
 
-  return `BAZ${String(highest + 1).padStart(3, '0')}`
+    return match
+      ? Math.max(highest, Number(match[1]))
+      : highest
+  }, 0)
+
+  const savedCounter = Number(
+    localStorage.getItem(CODE_COUNTER_KEY)
+  )
+
+  const nextNumber = Number.isSafeInteger(savedCounter) &&
+    savedCounter > 0
+    ? savedCounter
+    : 1
+
+  return Math.max(highestExisting + 1, nextNumber)
+}
+
+function createProductCode(products: Product[]): string {
+  const nextNumber = getNextProductNumber(products)
+
+  return `BAZ${String(nextNumber).padStart(3, '0')}`
+}
+
+
+function calculateMargin(
+  costPrice: number,
+  salePrice: number
+): number {
+  if (salePrice <= 0) return 0
+
+  return ((salePrice - costPrice) / salePrice) * 100
+}
+
+function formatMargin(
+  costPrice: number,
+  salePrice: number
+): string {
+  return calculateMargin(costPrice, salePrice).toLocaleString(
+    'pt-BR',
+    {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }
+  )
 }
 
 function Products() {
@@ -62,6 +104,7 @@ function Products() {
   const [form, setForm] = useState<ProductFormData>(emptyForm)
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('Todas')
+  const [stockFilter, setStockFilter] = useState('Todos')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [formOpen, setFormOpen] = useState(false)
   const [feedback, setFeedback] = useState('')
@@ -83,27 +126,37 @@ function Products() {
         categoryFilter === 'Todas' ||
         product.category === categoryFilter
 
-      return matchesSearch && matchesCategory
+      const matchesStock =
+        stockFilter === 'Todos' ||
+        (stockFilter === 'Disponíveis' &&
+          product.stock > product.minStock) ||
+        (stockFilter === 'Estoque baixo' &&
+          product.stock > 0 &&
+          product.stock <= product.minStock) ||
+        (stockFilter === 'Esgotados' &&
+          product.stock === 0)
+
+      return matchesSearch && matchesCategory && matchesStock
     })
-  }, [products, search, categoryFilter])
+  }, [products, search, categoryFilter, stockFilter])
 
   const totalStock = products.reduce(
     (total, product) => total + product.stock,
-    0,
+    0
   )
 
   const inventoryCost = products.reduce(
     (total, product) => total + product.costPrice * product.stock,
-    0,
+    0
   )
 
   const lowStockCount = products.filter(
-    (product) => product.stock <= product.minStock,
+    (product) => product.stock <= product.minStock
   ).length
 
   function updateField<K extends keyof ProductFormData>(
     field: K,
-    value: ProductFormData[K],
+    value: ProductFormData[K]
   ) {
     setForm((previous) => ({
       ...previous,
@@ -113,10 +166,12 @@ function Products() {
 
   function openNewForm() {
     setEditingId(null)
+
     setForm({
       ...emptyForm,
       code: createProductCode(products),
     })
+
     setFeedback('')
     setFormOpen(true)
   }
@@ -148,7 +203,9 @@ function Products() {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    const normalizedCode = form.code.trim().toUpperCase()
+    const normalizedCode = editingId
+      ? products.find((product) => product.id === editingId)?.code ?? ''
+      : createProductCode(products)
 
     if (!form.name.trim()) {
       setFeedback('Informe o nome do produto.')
@@ -163,7 +220,7 @@ function Products() {
     const duplicateCode = products.some(
       (product) =>
         product.code.toLowerCase() === normalizedCode.toLowerCase() &&
-        product.id !== editingId,
+        product.id !== editingId
     )
 
     if (duplicateCode) {
@@ -197,15 +254,16 @@ function Products() {
         previous.map((product) =>
           product.id === editingId
             ? {
-                ...product,
-                ...form,
-                code: normalizedCode,
-                name: form.name.trim(),
-                description: form.description.trim(),
-              }
-            : product,
-        ),
+              ...product,
+              ...form,
+              code: normalizedCode,
+              name: form.name.trim(),
+              description: form.description.trim(),
+            }
+            : product
+        )
       )
+
       setFeedback('Produto atualizado com sucesso.')
     } else {
       const newProduct: Product = {
@@ -218,6 +276,14 @@ function Products() {
       }
 
       setProducts((previous) => [...previous, newProduct])
+      const match = normalizedCode.match(/^BAZ(\d+)$/)
+
+      if (match) {
+        localStorage.setItem(
+          CODE_COUNTER_KEY,
+          String(Number(match[1]) + 1)
+        )
+      }
       setFeedback('Produto cadastrado com sucesso.')
     }
 
@@ -228,14 +294,15 @@ function Products() {
 
   function deleteProduct(product: Product) {
     const confirmed = window.confirm(
-      `Deseja excluir o produto "${product.name}"?`,
+      `Deseja excluir o produto "${product.name}"?`
     )
 
     if (!confirmed) return
 
     setProducts((previous) =>
-      previous.filter((item) => item.id !== product.id),
+      previous.filter((item) => item.id !== product.id)
     )
+
     setFeedback('Produto excluído.')
   }
 
@@ -247,7 +314,10 @@ function Products() {
           <p>Gerencie seu catálogo, preços e estoque.</p>
         </div>
 
-        <button className="primary-button" onClick={openNewForm}>
+        <button
+          className="primary-button"
+          onClick={openNewForm}
+        >
           + Novo produto
         </button>
       </div>
@@ -277,6 +347,7 @@ function Products() {
       {feedback && (
         <div className="product-feedback" role="status">
           {feedback}
+
           <button
             type="button"
             onClick={() => setFeedback('')}
@@ -294,6 +365,7 @@ function Products() {
               <h3>
                 {editingId ? 'Editar produto' : 'Novo produto'}
               </h3>
+
               <p>Preencha os dados do produto abaixo.</p>
             </div>
 
@@ -307,7 +379,10 @@ function Products() {
             </button>
           </div>
 
-          <form className="product-form" onSubmit={handleSubmit}>
+          <form
+            className="product-form"
+            onSubmit={handleSubmit}
+          >
             <label>
               Nome do produto *
               <input
@@ -368,7 +443,10 @@ function Products() {
                 step="0.01"
                 value={form.costPrice}
                 onChange={(event) =>
-                  updateField('costPrice', Number(event.target.value))
+                  updateField(
+                    'costPrice',
+                    Number(event.target.value)
+                  )
                 }
               />
             </label>
@@ -382,7 +460,10 @@ function Products() {
                 step="0.01"
                 value={form.salePrice}
                 onChange={(event) =>
-                  updateField('salePrice', Number(event.target.value))
+                  updateField(
+                    'salePrice',
+                    Number(event.target.value)
+                  )
                 }
               />
             </label>
@@ -396,7 +477,10 @@ function Products() {
                 step="1"
                 value={form.stock}
                 onChange={(event) =>
-                  updateField('stock', Number(event.target.value))
+                  updateField(
+                    'stock',
+                    Number(event.target.value)
+                  )
                 }
               />
             </label>
@@ -410,21 +494,45 @@ function Products() {
                 step="1"
                 value={form.minStock}
                 onChange={(event) =>
-                  updateField('minStock', Number(event.target.value))
+                  updateField(
+                    'minStock',
+                    Number(event.target.value)
+                  )
                 }
               />
             </label>
 
             <div className="profit-preview">
               <span>Lucro bruto estimado por unidade</span>
+
               <strong
                 className={
                   form.salePrice - form.costPrice < 0
                     ? 'negative-value'
-                    : ''
+                    : 'positive-value'
                 }
               >
-                {formatCurrency(form.salePrice - form.costPrice)}
+                {formatCurrency(
+                  form.salePrice - form.costPrice
+                )}
+              </strong>
+
+              <span>Margem de lucro bruto</span>
+
+              <strong
+                className={
+                  calculateMargin(
+                    form.costPrice,
+                    form.salePrice
+                  ) < 0
+                    ? 'negative-value'
+                    : 'positive-value'
+                }
+              >
+                {formatMargin(
+                  form.costPrice,
+                  form.salePrice
+                )}%
               </strong>
             </div>
 
@@ -443,8 +551,13 @@ function Products() {
                 Cancelar
               </button>
 
-              <button type="submit" className="primary-button">
-                {editingId ? 'Salvar alterações' : 'Cadastrar produto'}
+              <button
+                type="submit"
+                className="primary-button"
+              >
+                {editingId
+                  ? 'Salvar alterações'
+                  : 'Cadastrar produto'}
               </button>
             </div>
           </form>
@@ -455,6 +568,7 @@ function Products() {
         <div className="panel-heading product-list-heading">
           <div>
             <h3>Lista de produtos</h3>
+
             <p>
               {filteredProducts.length} produto(s) encontrado(s)
             </p>
@@ -466,20 +580,51 @@ function Products() {
             aria-label="Pesquisar produtos"
             placeholder="Pesquisar por nome, código ou categoria..."
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) =>
+              setSearch(event.target.value)
+            }
           />
 
           <select
             aria-label="Filtrar categoria"
             value={categoryFilter}
-            onChange={(event) => setCategoryFilter(event.target.value)}
+            onChange={(event) =>
+              setCategoryFilter(event.target.value)
+            }
           >
-            <option value="Todas">Todas as categorias</option>
+            <option value="Todas">
+              Todas as categorias
+            </option>
+
             {categories.map((category) => (
               <option key={category} value={category}>
                 {category}
               </option>
             ))}
+          </select>
+
+          <select
+            aria-label="Filtrar por situação do estoque"
+            value={stockFilter}
+            onChange={(event) =>
+              setStockFilter(event.target.value)
+            }
+          >
+            <option value="Todos">
+              Todos os estoques
+            </option>
+
+            <option value="Disponíveis">
+              Disponíveis
+            </option>
+
+            <option value="Estoque baixo">
+              Estoque baixo
+            </option>
+
+            <option value="Esgotados">
+              Esgotados
+            </option>
           </select>
         </div>
 
@@ -492,6 +637,7 @@ function Products() {
                 <th>Compra</th>
                 <th>Venda</th>
                 <th>Lucro/un.</th>
+                <th>Margem (%)</th>
                 <th>Estoque</th>
                 <th>Ações</th>
               </tr>
@@ -502,50 +648,88 @@ function Products() {
                 <tr key={product.id}>
                   <td>
                     <strong>{product.name}</strong>
+
                     <span className="table-subtitle">
                       {product.category}
                     </span>
                   </td>
+
                   <td>{product.code}</td>
-                  <td>{formatCurrency(product.costPrice)}</td>
-                  <td>{formatCurrency(product.salePrice)}</td>
+
+                  <td>
+                    {formatCurrency(product.costPrice)}
+                  </td>
+
+                  <td>
+                    {formatCurrency(product.salePrice)}
+                  </td>
+
                   <td>
                     <span
                       className={
-                        product.salePrice - product.costPrice < 0
+                        product.salePrice -
+                          product.costPrice < 0
                           ? 'negative-value'
                           : 'positive-value'
                       }
                     >
                       {formatCurrency(
-                        product.salePrice - product.costPrice,
+                        product.salePrice -
+                        product.costPrice
                       )}
                     </span>
                   </td>
+
                   <td>
                     <span
-                      className={`stock-badge ${
-                        product.stock <= product.minStock
+                      className={
+                        calculateMargin(
+                          product.costPrice,
+                          product.salePrice
+                        ) < 0
+                          ? 'negative-value'
+                          : 'positive-value'
+                      }
+                    >
+                      {formatMargin(
+                        product.costPrice,
+                        product.salePrice
+                      )}%
+                    </span>
+                  </td>
+
+                  <td>
+                    <span
+                      className={`stock-badge ${product.stock === 0
+                        ? 'stock-out'
+                        : product.stock <=
+                          product.minStock
                           ? 'stock-low'
                           : 'stock-ok'
-                      }`}
+                        }`}
                     >
                       {product.stock}
                     </span>
                   </td>
+
                   <td>
                     <div className="table-actions">
                       <button
                         type="button"
                         className="edit-button"
-                        onClick={() => openEditForm(product)}
+                        onClick={() =>
+                          openEditForm(product)
+                        }
                       >
                         Editar
                       </button>
+
                       <button
                         type="button"
                         className="delete-button"
-                        onClick={() => deleteProduct(product)}
+                        onClick={() =>
+                          deleteProduct(product)
+                        }
                       >
                         Excluir
                       </button>
@@ -559,7 +743,11 @@ function Products() {
           {filteredProducts.length === 0 && (
             <div className="product-empty">
               <div className="empty-icon">□</div>
-              <strong>Nenhum produto encontrado</strong>
+
+              <strong>
+                Nenhum produto encontrado
+              </strong>
+
               <p>
                 Cadastre um produto ou altere os filtros da pesquisa.
               </p>

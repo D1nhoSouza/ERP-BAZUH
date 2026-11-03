@@ -154,12 +154,18 @@ function History() {
       </div>
     </div>
 
+  {/* COMPROVANTE NÃO FISCAL... */}
+
     <div className="print-container">
       <div className="receipt">
         <header className="receipt-header">
+          
           <h2>BAZUH</h2>
-          <p>COMPROVANTE DE VENDA</p>
+          <p>Tecnologia e variedades</p>
+          <p>CNPJ: 69.670.533/0001-87</p>
+          <p>Whats: (91) 9198504-7027</p>
           <p>Documento não fiscal</p>
+
         </header>
 
         <hr />
@@ -207,6 +213,8 @@ function History() {
 
         <footer className="receipt-footer">
           <p>Obrigado pela preferência!</p>
+          <p>Siga-nos: @bazuhtech</p>
+          <p>Para trocas, apresente este comprovante</p>
           <strong>BAZUH — Tecnologia e variedades</strong>
         </footer>
       </div>

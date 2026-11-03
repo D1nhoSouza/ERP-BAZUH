@@ -2,6 +2,8 @@ import History from './pages/History'
 import { useEffect, useState } from 'react'
 import Sales from './pages/Sales'
 import Products from './pages/Products'
+import Payments from './pages/Payments'
+import Settings from './pages/Settings'
 import './App.css'
 
 const menuItems = [
@@ -321,13 +323,16 @@ function App() {
               </div>
             </>
           ) : activePage === 'products' ? (
-              <Products />
+             <Products />
           ) : activePage === 'sales' ? (
              <Sales />
+          ) : activePage === 'payments' ? (
+             <Payments />
           ) : activePage === 'history' ? (
              <History />
+          ) : activePage === 'settings' ? (
+             <Settings />
           ) : (
-            
             <section className="panel placeholder-panel">
               <div className="empty-icon">⚙</div>
               <h3>{currentPage?.label}</h3>
