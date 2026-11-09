@@ -1,9 +1,12 @@
-import History from './pages/History'
+
 import { useEffect, useState } from 'react'
+
+import History from './pages/History'
 import Sales from './pages/Sales'
 import Products from './pages/Products'
 import Payments from './pages/Payments'
 import Settings from './pages/Settings'
+
 import './App.css'
 
 const menuItems = [
@@ -15,6 +18,14 @@ const menuItems = [
   { id: 'settings', label: 'Configurações', icon: '⚙' },
 ]
 
+type DashboardSale = {
+  id: string
+  date: string
+  total: number
+  paymentMethod: string
+  status?: 'completed' | 'cancelled'
+}
+
 function App() {
   const [activePage, setActivePage] = useState('dashboard')
 
@@ -25,7 +36,7 @@ function App() {
   const [todaySales, setTodaySales] = useState(0)
   const [monthSales, setMonthSales] = useState(0)
   const [salesCount, setSalesCount] = useState(0)
-  const [recentSales, setRecentSales] = useState<any[]>([])
+  const [recentSales, setRecentSales] = useState<DashboardSale[]>([])
 
   useEffect(() => {
     function updateProductStats() {
@@ -50,39 +61,64 @@ function App() {
           ).length,
         )
 
+        // Carregar vendas
         const savedSales = localStorage.getItem('bazuh-pdv-sales')
-        const sales = savedSales ? JSON.parse(savedSales) : []
+        const sales: DashboardSale[] = savedSales
+          ? JSON.parse(savedSales)
+          : []
+
+        // Ignorar vendas canceladas
+        const activeSales = sales.filter(
+          (sale) => sale.status !== 'cancelled'
+        )
 
         const now = new Date()
 
-        const todayTotal = sales
-       .filter((sale: any) => {
-        const date = new Date(sale.date)
+        // Faturamento de hoje
+        const todayTotal = activeSales
+          .filter((sale) => {
+            const date = new Date(sale.date)
 
-       return date.toDateString() === now.toDateString()
-       })
-      .reduce((total: number, sale: any) => total + sale.total, 0)
+            return date.toDateString() === now.toDateString()
+          })
+          .reduce(
+            (total, sale) => total + sale.total,
+            0,
+          )
 
-      const monthTotal = sales
-      .filter((sale: any) => {
-      const date = new Date(sale.date)
+        // Faturamento do mês
+        const monthTotal = activeSales
+          .filter((sale) => {
+            const date = new Date(sale.date)
 
-      return (
-      date.getMonth() === now.getMonth() &&
-      date.getFullYear() === now.getFullYear()
-      )
-  })
-  .reduce((total: number, sale: any) => total + sale.total, 0)
+            return (
+              date.getMonth() === now.getMonth() &&
+              date.getFullYear() === now.getFullYear()
+            )
+          })
+          .reduce(
+            (total, sale) => total + sale.total,
+            0,
+          )
 
-      setTodaySales(todayTotal)
-      setMonthSales(monthTotal)
-      setSalesCount(sales.length)
-      setRecentSales([...sales].reverse().slice(0, 5))
+        setTodaySales(todayTotal)
+        setMonthSales(monthTotal)
+        setSalesCount(activeSales.length)
 
-      } catch {
+        // Exibir somente vendas válidas
+        setRecentSales(
+          [...activeSales].reverse().slice(0, 5)
+        )
+      } catch (error) {
+        console.error('Erro ao carregar indicadores:', error)
+
         setProductCount(0)
         setStockCount(0)
         setLowStockCount(0)
+        setTodaySales(0)
+        setMonthSales(0)
+        setSalesCount(0)
+        setRecentSales([])
       }
     }
 
@@ -98,6 +134,7 @@ function App() {
       <aside className="sidebar">
         <div className="brand">
           <div className="brand-icon"></div>
+
           <div>
             <h1>BAZUH</h1>
             <br />
@@ -126,6 +163,7 @@ function App() {
 
         <div className="sidebar-footer">
           <div className="status-dot" />
+
           <div>
             <strong>Sistema online</strong>
             <span>Versão 0.1.0</span>
@@ -136,12 +174,18 @@ function App() {
       <main className="main-content">
         <header className="topbar">
           <div>
-            <span className="breadcrumb">Bazuh / Sistema</span>
-            <h2>{currentPage?.label ?? 'Dashboard'}</h2>
+            <span className="breadcrumb">
+              Bazuh / Sistema
+            </span>
+
+            <h2>
+              {currentPage?.label ?? 'Dashboard'}
+            </h2>
           </div>
 
           <div className="user-profile">
             <div className="user-avatar">V</div>
+
             <div className="user-info">
               <strong>Administrador</strong>
               <span>Gestão da loja</span>
@@ -155,6 +199,7 @@ function App() {
               <div className="welcome-section">
                 <div>
                   <h2>Visão geral</h2>
+
                   <p>
                     Acompanhe os principais indicadores da sua loja.
                   </p>
@@ -162,51 +207,65 @@ function App() {
               </div>
 
               <section className="stats-grid">
-               <div className="stat-card">
-               <div className="stat-icon purple">▤</div>
-               <span>Vendas de hoje</span>
+                <div className="stat-card">
+                  <div className="stat-icon purple">▤</div>
 
-               <strong>
-               {todaySales.toLocaleString('pt-BR', {
-               style: 'currency',
-               currency: 'BRL',
-              })}
-              </strong>
+                  <span>Vendas de hoje</span>
 
-              <small>{salesCount} venda(s) registrada(s)</small>
-              </div>
+                  <strong>
+                    {todaySales.toLocaleString('pt-BR', {
+                      style: 'currency',
+                      currency: 'BRL',
+                    })}
+                  </strong>
+
+                  <small>
+                    {salesCount} venda(s) registrada(s)
+                  </small>
+                </div>
 
                 <div className="stat-card">
                   <div className="stat-icon green">↗</div>
+
                   <span>Vendas no mês</span>
+
                   <strong>
-                  {monthSales.toLocaleString('pt-BR', {
-                  style: 'currency',
-                  currency: 'BRL',
-                  })}
+                    {monthSales.toLocaleString('pt-BR', {
+                      style: 'currency',
+                      currency: 'BRL',
+                    })}
                   </strong>
+
                   <small>Faturamento mensal</small>
                 </div>
 
                 <div className="stat-card">
                   <div className="stat-icon blue">□</div>
+
                   <span>Produtos cadastrados</span>
+
                   <strong>{productCount}</strong>
+
                   <small>Itens no catálogo</small>
                 </div>
 
                 <div className="stat-card">
                   <div className="stat-icon blue">📦</div>
+
                   <span>Unidades em estoque</span>
+
                   <strong>{stockCount}</strong>
+
                   <small>Total de unidades disponíveis</small>
                 </div>
 
                 <div className="stat-card">
                   <div className="stat-icon orange">⚠</div>
+
                   <span>Estoque baixo</span>
+
                   <strong>{lowStockCount}</strong>
-                  
+
                   <small>Produtos para verificar</small>
                 </div>
               </section>
@@ -216,7 +275,10 @@ function App() {
                   <div className="panel-heading">
                     <div>
                       <h3>Vendas recentes</h3>
-                      <p>Acompanhe as últimas movimentações</p>
+
+                      <p>
+                        Acompanhe as últimas movimentações
+                      </p>
                     </div>
 
                     <button
@@ -227,53 +289,67 @@ function App() {
                     </button>
                   </div>
 
-                 {recentSales.length === 0 ? (
-                 <div className="empty-state">
-                 <div className="empty-icon">▤</div>
-                 <strong>Nenhuma venda por enquanto</strong>
-                 <p>
-                 Quando você realizar uma venda, ela aparecerá aqui.
-                 </p>
-                <button
-                className="primary-button"
-                onClick={() => setActivePage('sales')}
-                >
-                + Nova venda
-                </button>
-                </div>
-                ) : (
-                <div>
-                {recentSales.map((sale) => (
-               <div
-               key={sale.id}
-               style={{
-               display: 'flex',
-               justifyContent: 'space-between',
-               alignItems: 'center',
-               gap: '16px',
-               padding: '14px 0',
-               borderBottom: '1px solid #e5e7eb',
-               flexWrap: 'wrap',
-               }}
-               >
-               <div>
-               <strong>Venda #{sale.id.slice(0, 8)}</strong>
-               <p>
-              {new Date(sale.date).toLocaleString('pt-BR')}
-               </p>
-               <small>{sale.paymentMethod}</small>
-              </div>
+                  {recentSales.length === 0 ? (
+                    <div className="empty-state">
+                      <div className="empty-icon">▤</div>
 
-              <strong>
-              {sale.total.toLocaleString('pt-BR', {
-               style: 'currency',
-               currency: 'BRL',
-              })}
-              </strong>
-              </div>
-              ))  }
-              </div>
-              )}
+                      <strong>
+                        Nenhuma venda por enquanto
+                      </strong>
+
+                      <p>
+                        Quando você realizar uma venda,
+                        ela aparecerá aqui.
+                      </p>
+
+                      <button
+                        className="primary-button"
+                        onClick={() => setActivePage('sales')}
+                      >
+                        + Nova venda
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      {recentSales.map((sale) => (
+                        <div
+                          key={sale.id}
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            gap: '16px',
+                            padding: '14px 0',
+                            borderBottom: '1px solid #e5e7eb',
+                            flexWrap: 'wrap',
+                          }}
+                        >
+                          <div>
+                            <strong>
+                              Venda #{sale.id.slice(0, 8)}
+                            </strong>
+
+                            <p>
+                              {new Date(
+                                sale.date
+                              ).toLocaleString('pt-BR')}
+                            </p>
+
+                            <small>
+                              {sale.paymentMethod}
+                            </small>
+                          </div>
+
+                          <strong>
+                            {sale.total.toLocaleString('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL',
+                            })}
+                          </strong>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </section>
 
                 <section className="panel quick-panel">
@@ -289,10 +365,12 @@ function App() {
                     onClick={() => setActivePage('products')}
                   >
                     <div className="quick-icon purple">□</div>
+
                     <div>
                       <strong>Cadastrar produto</strong>
                       <span>Adicione itens ao catálogo</span>
                     </div>
+
                     <span className="arrow">→</span>
                   </button>
 
@@ -301,10 +379,12 @@ function App() {
                     onClick={() => setActivePage('sales')}
                   >
                     <div className="quick-icon green">＋</div>
+
                     <div>
                       <strong>Registrar venda</strong>
                       <span>Inicie uma nova operação</span>
                     </div>
+
                     <span className="arrow">→</span>
                   </button>
 
@@ -313,32 +393,37 @@ function App() {
                     onClick={() => setActivePage('history')}
                   >
                     <div className="quick-icon blue">◷</div>
+
                     <div>
                       <strong>Consultar histórico</strong>
                       <span>Confira as vendas anteriores</span>
                     </div>
+
                     <span className="arrow">→</span>
                   </button>
                 </section>
               </div>
             </>
           ) : activePage === 'products' ? (
-             <Products />
+            <Products />
           ) : activePage === 'sales' ? (
-             <Sales />
+            <Sales />
           ) : activePage === 'payments' ? (
-             <Payments />
+            <Payments />
           ) : activePage === 'history' ? (
-             <History />
+            <History />
           ) : activePage === 'settings' ? (
-             <Settings />
+            <Settings />
           ) : (
             <section className="panel placeholder-panel">
               <div className="empty-icon">⚙</div>
+
               <h3>{currentPage?.label}</h3>
+
               <p>
                 Esta seção será desenvolvida na próxima etapa.
               </p>
+
               <button
                 className="primary-button"
                 onClick={() => setActivePage('dashboard')}

@@ -19,6 +19,8 @@ type Sale = {
   amountReceived: number
   change: number
   date: string
+  status?: 'completed' | 'cancelled'
+  cancelledAt?: string
 }
 
 function formatCurrency(value: number) {
@@ -45,10 +47,162 @@ function History() {
     }
   }, [])
 
-  const totalSales = sales.reduce(
+  const activeSales = sales.filter(
+    (sale) => sale.status !== 'cancelled'
+  )
+
+  const totalSales = activeSales.reduce(
     (total, sale) => total + sale.total,
     0,
   )
+
+  function cancelSale() {
+    if (!selectedSale) return
+
+    if (selectedSale.status === 'cancelled') {
+      alert('Esta venda já foi cancelada.')
+      return
+    }
+
+    const confirmed = window.confirm(
+      `Deseja realmente cancelar a venda #${selectedSale.id.slice(0, 8)}?`
+    )
+
+    if (!confirmed) return
+
+    try {
+      const savedProducts = localStorage.getItem('bazuh-pdv-products')
+
+      if (!savedProducts) {
+        alert('Não foi possível localizar o estoque. Cancelamento interrompido.')
+        return
+      }
+
+      const products = JSON.parse(savedProducts)
+
+      if (!Array.isArray(products)) {
+        throw new Error('Estoque inválido')
+      }
+      // Verificar se todos os produtos da venda existem no estoque
+for (const item of selectedSale.items) {
+  const product = products.find(
+    (product: { id: string }) =>
+      product.id === item.product.id
+  )
+
+  if (!product) {
+    alert(
+      `O produto "${item.product.name}" não foi encontrado. ` +
+      'Cancelamento interrompido.'
+    )
+    return
+  }
+
+  if (
+    !Number.isSafeInteger(item.quantity) ||
+    item.quantity <= 0 ||
+    !Number.isSafeInteger(product.stock) ||
+    product.stock < 0
+  ) {
+    alert(
+      `Quantidade ou estoque inválido para "${item.product.name}".`
+    )
+    return
+  }
+
+  const totalReturned = selectedSale.items
+    .filter((entry) => entry.product.id === product.id)
+    .reduce((total, entry) => total + entry.quantity, 0)
+
+  if (!Number.isSafeInteger(product.stock + totalReturned)) {
+    alert('O estoque resultante excede o limite permitido.')
+    return
+  }
+}
+      const updatedProducts = products.map((product) => {
+        const returnedQuantity = selectedSale.items
+          .filter((item) => item.product.id === product.id)
+          .reduce((total, item) => total + item.quantity, 0)
+
+        return {
+          ...product,
+          stock: product.stock + returnedQuantity,
+        }
+      })
+
+      const updatedSales: Sale[] = sales.map((sale) =>
+        sale.id === selectedSale.id
+          ? {
+            ...sale,
+            status: 'cancelled',
+            cancelledAt: new Date().toISOString(),
+          }
+          : sale
+      )
+
+      // Salvar alterações
+      // Preparar os dados antes de gravar
+const productsKey = 'bazuh-pdv-products'
+const salesKey = 'bazuh-pdv-sales'
+
+const previousProducts = localStorage.getItem(productsKey)
+const previousSales = localStorage.getItem(salesKey)
+
+const newProducts = JSON.stringify(updatedProducts)
+const newSales = JSON.stringify(updatedSales)
+
+try {
+  // Atualizar estoque
+  localStorage.setItem(productsKey, newProducts)
+
+  // Atualizar histórico de vendas
+  localStorage.setItem(salesKey, newSales)
+} catch (error) {
+  // Tentar restaurar os dados anteriores
+  try {
+    if (previousProducts !== null) {
+      localStorage.setItem(productsKey, previousProducts)
+    } else {
+      localStorage.removeItem(productsKey)
+    }
+
+    if (previousSales !== null) {
+      localStorage.setItem(salesKey, previousSales)
+    } else {
+      localStorage.removeItem(salesKey)
+    }
+  } catch (restoreError) {
+    console.error(
+      'Falha ao restaurar os dados anteriores:',
+      restoreError
+    )
+
+    alert(
+      'Erro crítico ao salvar o cancelamento. ' +
+      'Confira o estoque e o histórico antes de continuar.'
+    )
+  }
+
+  throw error
+}
+
+      localStorage.setItem(
+        'bazuh-pdv-sales',
+        JSON.stringify(updatedSales)
+      )
+
+      setSales(updatedSales)
+
+      setSelectedSale(
+        updatedSales.find((sale) => sale.id === selectedSale.id) ?? null
+      )
+
+      alert('Venda cancelada e produtos devolvidos ao estoque.')
+    } catch (error) {
+      console.error('Erro ao cancelar venda:', error)
+      alert('Não foi possível cancelar a venda.')
+    }
+  }
 
   function printReceipt() {
     const receipt = document.querySelector('.receipt')
@@ -211,7 +365,7 @@ function History() {
       <div className="stats-grid">
         <div className="stat-card">
           <span>Total de vendas</span>
-          <strong>{sales.length}</strong>
+          <strong>{activeSales.length}</strong>
         </div>
 
         <div className="stat-card">
@@ -250,8 +404,28 @@ function History() {
               >
                 <div className="panel-heading">
                   <div>
-                    <h3>Venda #{sale.id.slice(0, 8)}</h3>
-                    <p>{formatDate(sale.date)}</p>
+                    <h3>
+  Venda #{sale.id.slice(0, 8)}
+</h3>
+
+<p>{formatDate(sale.date)}</p>
+
+{sale.status === 'cancelled' && (
+  <span
+    style={{
+      display: 'inline-block',
+      backgroundColor: '#fee2e2',
+      color: '#b91c1c',
+      padding: '5px 10px',
+      borderRadius: '6px',
+      fontSize: '12px',
+      fontWeight: 700,
+      marginTop: '8px',
+    }}
+  >
+    VENDA CANCELADA
+  </span>
+)}
                   </div>
 
                   <strong>{formatCurrency(sale.total)}</strong>
@@ -290,6 +464,24 @@ function History() {
                 >
                   Imprimir comprovante
                 </button>
+
+                {selectedSale.status !== 'cancelled' && (
+                  <button
+                    type="button"
+                    onClick={cancelSale}
+                    style={{
+                      backgroundColor: '#dc2626',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '10px 16px',
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                    }}
+                  >
+                    Cancelar venda
+                  </button>
+                )}
 
                 <button
                   type="button"

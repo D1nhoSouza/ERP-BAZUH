@@ -22,3 +22,35 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Banco de dados local BAZUH
+backend/database/*.db
+backend/database/*.db-wal
+backend/database/*.db-shm
+
+# Dependências do backend
+backend/node_modules/
+
+BACKUPS/
+backend/backups/
+
+
+# SQLite - bancos e arquivos auxiliares
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.db
+*.db-wal
+*.db-shm
+
+# Dados reais importados
+backend/importacao/*.json
+
+# Backups e arquivos locais
+backend/backups/
+BACKUPS/
+
+# Arquivos de ambiente
+.env
+.env.*
+!.env.example

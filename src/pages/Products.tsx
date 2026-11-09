@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import type { Product, ProductFormData } from '../types/product'
 import { formatCurrency } from '../utils/format'
+import { getProducts } from '../services/productsApi'
 import './Products.css'
 
 const STORAGE_KEY = 'bazuh-pdv-products'
@@ -108,6 +109,28 @@ function Products() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [formOpen, setFormOpen] = useState(false)
   const [feedback, setFeedback] = useState('')
+
+useEffect(() => {
+
+  async function testBackendConnection() {
+    try {
+      const backendProducts = await getProducts()
+
+      console.log(
+        'BAZUH SQLite — Produtos encontrados:',
+        backendProducts
+      )
+    } catch (error) {
+      console.error(
+        'BAZUH SQLite — Erro de conexão:',
+        error
+      )
+    }
+  }
+
+  void testBackendConnection()
+}, [])
+
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(products))
