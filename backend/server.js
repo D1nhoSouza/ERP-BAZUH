@@ -4,11 +4,18 @@ const cors = require('cors')
 const db = require('./database/db')
 
 // ============================================
-// CONFIGURAÇÃO DO SERVIDOR
+// CONFIGURAÃ‡ÃƒO DO SERVIDOR
 // ============================================
 
 const app = express()
-const PORT = process.env.BAZUH_ENV === 'test' ? 3002 : 3001
+
+const PORT =
+  process.env.BAZUH_ENV === 'migration'
+    ? 3003
+    : process.env.BAZUH_ENV === 'test'
+      ? 3002
+      : 3001
+
 
 app.use(cors())
 app.use(express.json())
@@ -41,7 +48,7 @@ app.get('/api/produtos', (req, res) => {
     console.error('Erro ao consultar produtos:', error)
 
     res.status(500).json({
-      erro: 'Não foi possível consultar os produtos.'
+      erro: 'NÃ£o foi possÃ­vel consultar os produtos.'
     })
   }
 })
@@ -75,7 +82,7 @@ app.post('/api/produtos', (req, res) => {
       !Number.isSafeInteger(minStock) || minStock < 0
     ) {
       return res.status(400).json({
-        erro: 'Dados do produto inválidos.'
+        erro: 'Dados do produto invÃ¡lidos.'
       })
     }
 
@@ -105,12 +112,12 @@ app.post('/api/produtos', (req, res) => {
       error.code === 'SQLITE_CONSTRAINT_PRIMARYKEY'
     ) {
       return res.status(409).json({
-        erro: 'ID ou código de produto já cadastrado.'
+        erro: 'ID ou cÃ³digo de produto jÃ¡ cadastrado.'
       })
     }
 
     res.status(500).json({
-      erro: 'Não foi possível cadastrar o produto.'
+      erro: 'NÃ£o foi possÃ­vel cadastrar o produto.'
     })
   }
 })
@@ -142,7 +149,7 @@ app.put('/api/produtos/:id', (req, res) => {
       !Number.isSafeInteger(minStock) || minStock < 0
     ) {
       return res.status(400).json({
-        erro: 'Dados do produto inválidos.'
+        erro: 'Dados do produto invÃ¡lidos.'
       })
     }
 
@@ -165,7 +172,7 @@ app.put('/api/produtos/:id', (req, res) => {
 
     if (result.changes === 0) {
       return res.status(404).json({
-        erro: 'Produto não encontrado.'
+        erro: 'Produto nÃ£o encontrado.'
       })
     }
 
@@ -178,12 +185,12 @@ app.put('/api/produtos/:id', (req, res) => {
 
     if (error.code === 'SQLITE_CONSTRAINT_UNIQUE') {
       return res.status(409).json({
-        erro: 'Código de produto já cadastrado.'
+        erro: 'CÃ³digo de produto jÃ¡ cadastrado.'
       })
     }
 
     res.status(500).json({
-      erro: 'Não foi possível atualizar o produto.'
+      erro: 'NÃ£o foi possÃ­vel atualizar o produto.'
     })
   }
 })
@@ -200,25 +207,25 @@ app.delete('/api/produtos/:id', (req, res) => {
 
     if (result.changes === 0) {
       return res.status(404).json({
-        erro: 'Produto não encontrado.'
+        erro: 'Produto nÃ£o encontrado.'
       })
     }
 
     res.json({
-      mensagem: 'Produto excluído com sucesso!',
+      mensagem: 'Produto excluÃ­do com sucesso!',
       id
     })
   } catch (error) {
     console.error('Erro ao excluir produto:', error)
 
     res.status(500).json({
-      erro: 'Não foi possível excluir o produto.'
+      erro: 'NÃ£o foi possÃ­vel excluir o produto.'
     })
   }
 })
 
 // ============================================
-// API DE VENDAS — BAZUH PDV
+// API DE VENDAS â€” BAZUH PDV
 // ============================================
 
 // Consultas SQL
@@ -253,11 +260,11 @@ const findExistingSale = db.prepare(`
 `)
 
 // ============================================
-// TRANSAÇÃO DE VENDAS
+// TRANSAÃ‡ÃƒO DE VENDAS
 // ============================================
 
-// A transação está preparada, mas ainda
-// não é executada pela rota da API.
+// A transaÃ§Ã£o estÃ¡ preparada, mas ainda
+// nÃ£o Ã© executada pela rota da API.
 
 const registerSaleTransaction = db.transaction((sale) => {
   const {
@@ -301,7 +308,7 @@ const registerSaleTransaction = db.transaction((sale) => {
   const saleItems = []
   let totalCents = 0
 
-  // Verificar preços e estoque
+  // Verificar preÃ§os e estoque
   for (const [productId, quantity] of quantities) {
     const product = findSaleProduct.get(productId)
 
@@ -442,15 +449,15 @@ function handleSaleError(error, res) {
   const errors = {
     VENDA_DUPLICADA: [
       409,
-      'Esta venda já foi registrada.'
+      'Esta venda jÃ¡ foi registrada.'
     ],
     ITEM_INVALIDO: [
       400,
-      'Produto ou quantidade inválida.'
+      'Produto ou quantidade invÃ¡lida.'
     ],
     PRODUTO_NAO_ENCONTRADO: [
       404,
-      'Produto não encontrado.'
+      'Produto nÃ£o encontrado.'
     ],
     ESTOQUE_INSUFICIENTE: [
       409,
@@ -458,15 +465,15 @@ function handleSaleError(error, res) {
     ],
     PRECO_INVALIDO: [
       422,
-      'Preço do produto inválido.'
+      'PreÃ§o do produto invÃ¡lido.'
     ],
     VALOR_INVALIDO: [
       422,
-      'Valor total da venda inválido.'
+      'Valor total da venda invÃ¡lido.'
     ],
     PAGAMENTO_INVALIDO: [
       400,
-      'Pagamento inválido.'
+      'Pagamento invÃ¡lido.'
     ],
     PAGAMENTO_INSUFICIENTE: [
       400,
@@ -485,7 +492,7 @@ function handleSaleError(error, res) {
   console.error('Erro ao registrar venda:', error)
 
   return res.status(500).json({
-    erro: 'Não foi possível registrar a venda.'
+    erro: 'NÃ£o foi possÃ­vel registrar a venda.'
   })
 }
 
@@ -502,16 +509,16 @@ app.post('/api/vendas', (req, res) => {
     date
   } = req.body ?? {}
 
-  // Validar dados obrigatórios
+  // Validar dados obrigatÃ³rios
   if (
     typeof id !== 'string' ||
     !id.trim() ||
     !Array.isArray(items) ||
     items.length === 0 ||
-    !['Dinheiro', 'PIX', 'Débito', 'Crédito'].includes(paymentMethod)
+    !['Dinheiro', 'PIX', 'DÃ©bito', 'CrÃ©dito'].includes(paymentMethod)
   ) {
     return res.status(400).json({
-      erro: 'Dados da venda inválidos.'
+      erro: 'Dados da venda invÃ¡lidos.'
     })
   }
 
@@ -527,7 +534,7 @@ app.post('/api/vendas', (req, res) => {
 
   if (invalidItem) {
     return res.status(400).json({
-      erro: 'Produto ou quantidade inválida na venda.'
+      erro: 'Produto ou quantidade invÃ¡lida na venda.'
     })
   }
 
@@ -540,7 +547,7 @@ app.post('/api/vendas', (req, res) => {
     )
   ) {
     return res.status(400).json({
-      erro: 'Valor recebido inválido.'
+      erro: 'Valor recebido invÃ¡lido.'
     })
   }
 
@@ -553,7 +560,7 @@ app.post('/api/vendas', (req, res) => {
     )
   ) {
     return res.status(400).json({
-      erro: 'Data da venda inválida.'
+      erro: 'Data da venda invÃ¡lida.'
     })
   }
 
@@ -568,7 +575,7 @@ app.post('/api/vendas', (req, res) => {
 
     if (!Number.isSafeInteger(requestedQuantity)) {
       return res.status(400).json({
-        erro: 'Quantidade total inválida na venda.'
+        erro: 'Quantidade total invÃ¡lida na venda.'
       })
     }
 
@@ -582,7 +589,7 @@ app.post('/api/vendas', (req, res) => {
 
       if (!product) {
         return res.status(404).json({
-          erro: 'Produto não encontrado no banco de dados.',
+          erro: 'Produto nÃ£o encontrado no banco de dados.',
           productId
         })
       }
@@ -600,7 +607,7 @@ app.post('/api/vendas', (req, res) => {
     console.error('Erro ao verificar estoque:', error)
 
     return res.status(500).json({
-      erro: 'Não foi possível verificar os produtos da venda.'
+      erro: 'NÃ£o foi possÃ­vel verificar os produtos da venda.'
     })
   }
 
@@ -614,12 +621,12 @@ app.post('/api/vendas', (req, res) => {
   }
 
   // ============================================
-  // PROTEÇÃO DO AMBIENTE DE PRODUÇÃO
+  // PROTEÃ‡ÃƒO DO AMBIENTE DE PRODUÃ‡ÃƒO
   // ============================================
 
   if (process.env.BAZUH_ENV !== 'test') {
     return res.status(501).json({
-      erro: 'Registro de vendas ainda desativado em produção.'
+      erro: 'Registro de vendas ainda desativado em produÃ§Ã£o.'
     })
   }
 
@@ -627,8 +634,8 @@ app.post('/api/vendas', (req, res) => {
   // AMBIENTE DE TESTES
   // ============================================
 
-  // A transação ainda NÃO será executada.
-  // Na próxima etapa conectaremos a função
+  // A transaÃ§Ã£o ainda NÃƒO serÃ¡ executada.
+  // Na prÃ³xima etapa conectaremos a funÃ§Ã£o
   // registerSaleTransaction com tratamento
   // de erros, somente no ambiente de testes.
 
@@ -648,7 +655,9 @@ app.post('/api/vendas', (req, res) => {
 
 
 app.get('/api/vendas', (req, res) => {
-  if (process.env.BAZUH_ENV !== 'test') {
+
+if (!['test', 'migration'].includes(process.env.BAZUH_ENV)) {
+
     return res.status(501).json({
       erro: 'Consulta de vendas desativada em producao.'
     })
